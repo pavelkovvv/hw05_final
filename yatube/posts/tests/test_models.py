@@ -51,7 +51,7 @@ class TestPostGroup(TestCase):
         post = TestPostGroup.post_str
         field_help_texts = {
             'text': 'Введите текст поста',
-            'group': 'Группа, к которой будет относиться пост'
+            'group': 'Выберите группу, к которой будет относиться пост'
         }
         for field, expected_value in field_help_texts.items():
             with self.subTest(field=field):

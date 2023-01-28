@@ -8,6 +8,12 @@ class PostForm(forms.ModelForm):
         model = Post
         fields = ('text', 'group', 'image')
 
+        labels = {
+            'text': 'Текст поста',
+            'group': 'Группа',
+            'image': 'Изображение'
+        }
+
 
 class CommentForm(forms.ModelForm):
     class Meta:
