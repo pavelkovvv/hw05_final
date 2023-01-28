@@ -131,23 +131,26 @@ class PostsTestForms(TestCase):
         """Проверка, что после успешной отправки комментарий появляется на
         странице поста"""
 
+        comment_count = Comment.objects.count()
         form_data = {
             'text': 'Тестовый пост',
         }
-        self.authorized_client.post(
+        response = self.authorized_client.post(
             reverse('posts:add_comment', kwargs={'post_id':
                     self.post.id}),
             data=form_data,
             follow=True
         )
         need_comment = Comment.objects.first()
-        param_value = {
-            'post': self.post.text,
-            'author': self.post.author,
-            'text': form_data['text']
-        }
         # Проверка, что верно создался объект в БД
         with self.subTest():
-            self.assertEqual(need_comment.post.text, param_value['post'])
-            self.assertEqual(need_comment.author, param_value['author'])
-            self.assertEqual(need_comment.text, param_value['text'])
+            self.assertRedirects(response, reverse(
+                                 'posts:post_detail',
+                                 kwargs={'post_id': self.post.pk}))
+            self.assertEqual(comment_count + 1, Comment.objects.count())
+            # Прошёлся по всему объекту комментария (после ревью обязательно
+            # уберу этот коммент, просто так проще показать свою мысль, чем
+            # спамить Вам личку)
+            self.assertEqual(need_comment.text, form_data['text'])
+            self.assertEqual(need_comment.post, self.post)
+            self.assertEqual(need_comment.author, self.user)
