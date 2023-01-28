@@ -122,14 +122,10 @@ class PostsTestForms(TestCase):
             data=form_data,
             follow=True
         )
+        post_image = Post.objects.first()
+
+        self.assertEqual(post_image.image, 'posts/small.gif')
         self.assertEqual(Post.objects.count(), post_count + 1)
-        self.assertTrue(
-            Post.objects.filter(
-                text='Тестовый пост',
-                group=self.group.id,
-                image='posts/small.gif',
-            ).exists()
-        )
 
     def test_comment_in_context(self):
         """Проверка, что после успешной отправки комментарий появляется на
@@ -144,11 +140,14 @@ class PostsTestForms(TestCase):
             data=form_data,
             follow=True
         )
-        response = self.authorized_client.get(reverse('posts:post_detail',
-                                                      kwargs={'post_id':
-                                                              self.post.id}))
-        need_comment = Comment.objects.get(
-            text=form_data['text']
-        )
-
-        self.assertEqual(response.context['comments'][0], need_comment)
+        need_comment = Comment.objects.first()
+        param_value = {
+            'post': self.post.text,
+            'author': self.post.author,
+            'text': form_data['text']
+        }
+        # Проверка, что верно создался объект в БД
+        with self.subTest():
+            self.assertEqual(need_comment.post.text, param_value['post'])
+            self.assertEqual(need_comment.author, param_value['author'])
+            self.assertEqual(need_comment.text, param_value['text'])

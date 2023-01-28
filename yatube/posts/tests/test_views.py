@@ -67,6 +67,7 @@ class ViewsTestPosts(TestCase):
                                                        self.first_post_from_db.
                                                        id}),
                                        reverse('posts:post_create')],
+            'posts/follow.html': reverse('posts:follow_index'),
         }
         for template, reverse_name in templates_pages_names.items():
             if template == 'posts/create_post.html':
@@ -295,42 +296,40 @@ class ViewsTestPostsFollow(TestCase):
         self.auth_user3 = Client()
         self.auth_user3.force_login(self.user3)
         # Создадим 6 постов для первого пользователя
-        POSTS_FOR_FIRST_USER = 6
+        self.POSTS_FOR_FIRST_USER = 6
         Post.objects.bulk_create([
             Post(text=f'Тестовый заголовок № {i} для 1 юзера',
                  author=self.user1)
-            for i in range(POSTS_FOR_FIRST_USER)
+            for i in range(self.POSTS_FOR_FIRST_USER)
         ])
         # Создадим 3 поста для второго пользователя
-        POSTS_FOR_SECOND_USER = 3
+        self.POSTS_FOR_SECOND_USER = 3
         Post.objects.bulk_create([
             Post(text=f'Тестовый заголовок № {i} для 2 юзера',
                  author=self.user2)
-            for i in range(POSTS_FOR_SECOND_USER)
+            for i in range(self.POSTS_FOR_SECOND_USER)
         ])
         # Создадим 2 поста для третьего пользователя
-        POSTS_FOR_THIRD_USER = 2
+        self.POSTS_FOR_THIRD_USER = 2
         Post.objects.bulk_create([
             Post(text=f'Тестовый заголовок № {i} для 3 юзера',
                  author=self.user3)
-            for i in range(POSTS_FOR_THIRD_USER)
+            for i in range(self.POSTS_FOR_THIRD_USER)
         ])
 
     def test_follow(self):
         """Проверка, что авторизованный пользователь может подписываться на
         других пользователей и удалять их из подписок"""
 
-        # Сначала проверим кол-во постов на странице 'posts:follow_index' у
-        # первого автора, потом подпишемся на второго автора и сравним
-        # первоначальное кол-во с итоговым
-        resp1 = self.auth_user1.get(reverse('posts:follow_index'))
-        before_test = len(resp1.context['page_obj'])
+        # Смоделируем ситуацию, что первый автор подписался на второго автора
+        # Сравним кол-во постов второго автора с итоговым кол-вом постов
+        # Первого автора на странице его подписок
         self.auth_user1.get(reverse('posts:profile_follow',
                                     kwargs={'username': self.user2.username}))
         resp2 = self.auth_user1.get(reverse('posts:follow_index'))
         after_test = len(resp2.context['page_obj'])
 
-        self.assertNotEqual(before_test, after_test)
+        self.assertEqual(self.POSTS_FOR_SECOND_USER, after_test)
 
         # Возьмём значение кол-ва подписок после подписки первого автора на
         # второго, затем отпишемся и сравним значения
@@ -352,12 +351,20 @@ class ViewsTestPostsFollow(TestCase):
         len_test1 = len(resp1.context['page_obj'])
         Post.objects.create(
             text='textpost',
-            author=self.user1
+            author=self.user2
         )
         resp2 = self.auth_user1.get(reverse('posts:follow_index'))
         len_test2 = len(resp2.context['page_obj'])
 
-        self.assertEqual(len_test1, len_test2)
+        self.assertEqual(len_test1 + 1, len_test2)
+        param_value = {
+            'text': 'textpost',
+            'author': self.user2,
+        }
+        with self.subTest():
+            response = resp2.context['page_obj'][0]
+            self.assertEqual(response.text, param_value['text'])
+            self.assertEqual(response.author, param_value['author'])
 
     # Проверим, что новая запись не появляется в ленте тех, кто не подписан
 

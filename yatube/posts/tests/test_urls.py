@@ -51,6 +51,13 @@ class URLTestsPosts(TestCase):
                 response = client.get('/unexisting_page/')
                 self.assertEqual(response.status_code, answer)
 
+        # Проверка, что страница 404 отдаёт кастомный шаблон
+        settings.DEBUG = False
+        response = self.authorized_client.get('/group/loooool/')
+
+        self.assertTemplateUsed(response, 'core/404.html')
+        settings.DEBUG = True
+
     def test_create_post(self):
         '''Проверка возможности создания поста только авторизованному
         пользователю'''
@@ -75,15 +82,9 @@ class URLTestsPosts(TestCase):
 
         for client, answer in client_answer.items():
             with self.subTest(answer=answer):
-                response = client.get(
+                resp1 = client.get(
                     f'/posts/{self.create_post.id}/edit/')
-                self.assertEqual(response.status_code, answer)
+                resp2 = client.get('/follow/')
 
-    def test_custom_404_page(self):
-        """Проверка, что страница 404 отдаёт кастомный шаблон"""
-
-        settings.DEBUG = False
-        response = self.authorized_client.get('/group/loooool/')
-
-        self.assertTemplateUsed(response, 'core/404.html')
-        settings.DEBUG = True
+                self.assertEqual(resp1.status_code, answer)
+                self.assertEqual(resp2.status_code, answer)

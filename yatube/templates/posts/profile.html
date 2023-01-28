@@ -9,20 +9,22 @@
     <h1>Все посты пользователя {{ author.username }}</h1>
   {% endif %}
   <h3>Всего постов: {{ author.posts.count  }}</h3>
-  {% if following %}
-    <a
-      class="btn btn-lg btn-light"
-      href="{% url 'posts:profile_unfollow' author.username %}" role="button"
-    >
-      Отписаться
-    </a>
-  {% else %}
+  {% if author != request.user %}
+    {% if following %}
       <a
-        class="btn btn-lg btn-primary"
-        href="{% url 'posts:profile_follow' author.username %}" role="button"
+        class="btn btn-lg btn-light"
+        href="{% url 'posts:profile_unfollow' author.username %}" role="button"
       >
-        Подписаться
+        Отписаться
       </a>
+    {% else %}
+        <a
+          class="btn btn-lg btn-primary"
+          href="{% url 'posts:profile_follow' author.username %}" role="button"
+        >
+         Подписаться
+        </a>
+    {% endif %}
    {% endif %}
 </div>
 <div class="container col-lg-9 col-sm-12">
@@ -44,7 +46,7 @@
     {% endthumbnail %}
     <p>
     {{ post.text|linebreaks }}
-    <a href="{% url 'posts:post_detail' post.pk %}">(подробная информация)</a>
+    <a href="{% url 'posts:post_detail' post.pk %}">(подробная информация о посте)</a>
     </p>
     </article>
     {% if not forloop.last %}<hr>{% endif %}

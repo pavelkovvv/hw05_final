@@ -11,7 +11,6 @@ def index(request):
     template = 'posts/index.html'
     post_list = Post.objects.all()
     context = {
-        'page_description': 'Последние обновления на сайте',
         'page_obj': paginator(request, post_list),
     }
     return render(request, template, context)
@@ -76,6 +75,7 @@ def post_create(request):
     return render(request, template, context)
 
 
+@login_required
 def post_edit(request, post_id):
     template = 'posts/create_post.html'
     post = get_object_or_404(Post, pk=post_id)
@@ -120,9 +120,8 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     follow_author = get_object_or_404(User, username=username)
-    if follow_author != request.user and (not request.user.follower.filter(
-                                          author=follow_author).exists()):
-        Follow.objects.create(
+    if follow_author != request.user:
+        Follow.objects.get_or_create(
             user=request.user,
             author=follow_author
         )
